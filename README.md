@@ -70,13 +70,95 @@ This structure helps teams keep feature code close together while still preservi
 
 ## Usage
 
-Install the CLI globally:
+### Local usage without BrickHub
+
+You do **not** need to publish bricks to [brickhub.dev](https://brickhub.dev) during development.
+
+flutter-factory supports local usage in two ways:
+
+1. Use the `flutter_factory` CLI from this repository.
+2. Use Mason directly with local brick paths.
+
+#### Option 1: Use the local CLI
+
+Clone this repository and activate the CLI from the local `cli/` package:
+
+```bash
+git clone <your-repo-url> flutter-factory
+cd flutter-factory
+dart pub global activate --source path cli
+```
+
+Point the CLI to the local flutter-factory repository so it can find `starter/` and `bricks/`:
+
+```bash
+export FLUTTER_FACTORY_ROOT="$(pwd)"
+```
+
+Now you can generate from local bricks without BrickHub:
+
+```bash
+flutter_factory create my_app --state riverpod --auth --offline
+flutter_factory add feature auth --state riverpod
+flutter_factory add api auth --endpoint /v1/auth
+flutter_factory add page login --feature auth
+```
+
+If you do not want to activate the CLI globally, run it directly:
+
+```bash
+dart run cli/bin/flutter_factory.dart create my_app --state riverpod --auth --offline
+```
+
+#### Option 2: Use Mason directly with local bricks
+
+Install Mason CLI:
+
+```bash
+dart pub global activate mason_cli
+```
+
+Use the root `mason.yaml`, which already registers local brick paths:
+
+```bash
+mason get
+```
+
+Then run local bricks:
+
+```bash
+mason make feature --name auth --state_management riverpod
+mason make api_service --name auth --endpoint /v1/auth
+```
+
+Run the starter brick locally into an output folder:
+
+```bash
+mason make starter \
+  --output-dir ./my_app \
+  --app_name my_app \
+  --state_management riverpod \
+  --backend rest_firebase_hybrid \
+  --auth true \
+  --offline_support true
+```
+
+Alternatively, add one brick manually from a local path:
+
+```bash
+mason add feature --path bricks/feature
+mason make feature --name auth --state_management riverpod
+```
+
+### Published usage
+
+Once the CLI package is published, install it globally:
 
 ```bash
 dart pub global activate flutter_factory
 ```
 
-Check your environment:
+Check your environment when the `doctor` command is available:
 
 ```bash
 flutter_factory doctor
@@ -85,7 +167,7 @@ flutter_factory doctor
 Create a new Flutter application:
 
 ```bash
-flutter_factory create my_app --state riverpod --router go_router --network dio
+flutter_factory create my_app --state riverpod --auth --offline
 ```
 
 Generate a new feature:

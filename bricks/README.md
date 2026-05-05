@@ -4,6 +4,25 @@ The `bricks/` directory contains all Mason bricks used by `flutter_factory`.
 
 Each brick should be small, focused, and architecture-aware. Bricks should generate production-ready code that matches the Clean Architecture and feature-first conventions documented in this repository.
 
+## Local Usage
+
+These bricks can be used without publishing to BrickHub.
+
+From the repository root, use the local brick registry:
+
+```bash
+mason get
+mason make feature --name auth --state_management riverpod
+mason make api_service --name auth --endpoint /v1/auth
+```
+
+Or add a single brick manually from a local path:
+
+```bash
+mason add feature --path bricks/feature
+mason make feature --name auth --state_management riverpod
+```
+
 Expected structure per brick:
 
 - `brick.yaml`: Mason metadata, variables, and description.

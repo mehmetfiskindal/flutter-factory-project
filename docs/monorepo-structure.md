@@ -30,7 +30,6 @@ Core files expected inside `cli/`:
 - `bin/flutter_factory.dart`: executable entry point.
 - `lib/src/command_runner.dart`: root command runner.
 - `lib/src/commands/create_command.dart`: app generation command.
-- `lib/src/commands/doctor_command.dart`: environment validation command.
 - `lib/src/commands/add_command.dart`: feature, API, and page generation command.
 - `lib/src/commands/config_command.dart`: interactive defaults setup command.
 - `lib/src/generator/mason_service.dart`: Mason invocation adapter.
