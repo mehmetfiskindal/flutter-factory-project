@@ -2,6 +2,7 @@
 .dart_tool/
 .packages
 build/
+bricks/pubspec.lock
 bricks/*/hooks/pubspec.lock
 
 # IDE

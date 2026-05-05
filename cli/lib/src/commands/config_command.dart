@@ -38,6 +38,9 @@ class ConfigCommand extends Command<int> {
           'backend',
         ],
       ],
+      questions: const [
+        ['Organization id?', 'organization'],
+      ],
       booleanQuestions: const [
         ['Auth ready?', 'auth'],
         ['Offline support?', 'offline_support'],
@@ -45,6 +48,7 @@ class ConfigCommand extends Command<int> {
       order: const [
         'state_management',
         'backend',
+        'organization',
         'auth',
         'offline_support',
       ],
@@ -56,6 +60,7 @@ class ConfigCommand extends Command<int> {
         answers['state_management'] as String?,
       ),
       backend: _normalizeBackend(answers['backend'] as String?),
+      organization: _normalizeOrganization(answers['organization'] as String?),
       auth: answers['auth'] as bool? ?? false,
       offline: answers['offline_support'] as bool? ?? false,
     );
@@ -78,5 +83,14 @@ class ConfigCommand extends Command<int> {
       'REST + Firebase hybrid' => 'rest_firebase_hybrid',
       _ => 'rest_firebase_hybrid',
     };
+  }
+
+  String _normalizeOrganization(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return 'com.example';
+    }
+
+    return trimmed;
   }
 }

@@ -7,6 +7,11 @@ vars:
     type: string
     description: Flutter application package name.
     prompt: What is the app name?
+  org_name:
+    type: string
+    description: Reverse-domain organization identifier.
+    default: com.example
+    prompt: What is the organization id?
   state_management:
     type: enum
     description: State management solution.

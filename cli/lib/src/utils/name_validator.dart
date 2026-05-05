@@ -13,3 +13,17 @@ void validateDartIdentifier(String value, {required String label}) {
     '',
   );
 }
+
+final _reverseDomainPattern = RegExp(r'^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$');
+
+void validateReverseDomain(String value, {required String label}) {
+  if (_reverseDomainPattern.hasMatch(value)) {
+    return;
+  }
+
+  throw UsageException(
+    'Invalid <$label> "$value". Use a reverse-domain identifier like '
+        'com.fiskindal.',
+    '',
+  );
+}

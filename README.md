@@ -98,16 +98,18 @@ export FLUTTER_FACTORY_ROOT="$(pwd)"
 Now you can generate from local bricks without BrickHub:
 
 ```bash
-flutter_factory create my_app --state riverpod --auth --offline
-flutter_factory add feature auth --state riverpod
-flutter_factory add api auth --endpoint /v1/auth
-flutter_factory add page login --feature auth
+flutter_factory doctor
+flutter_factory create my_app --org com.fiskindal --state riverpod --auth --offline
+cd my_app
+flutter_factory add feature profile --state riverpod
+flutter_factory add api billing --endpoint /v1/billing
+flutter_factory add page dashboard --feature profile
 ```
 
 If you do not want to activate the CLI globally, run it directly:
 
 ```bash
-dart run cli/bin/flutter_factory.dart create my_app --state riverpod --auth --offline
+dart run cli/bin/flutter_factory.dart create my_app --org com.fiskindal --state riverpod --auth --offline
 ```
 
 #### Option 2: Use Mason directly with local bricks
@@ -137,6 +139,7 @@ Run the starter brick locally into an output folder:
 mason make starter \
   --output-dir ./my_app \
   --app_name my_app \
+  --org_name com.fiskindal \
   --state_management riverpod \
   --backend rest_firebase_hybrid \
   --auth true \
@@ -158,7 +161,7 @@ Once the CLI package is published, install it globally:
 dart pub global activate flutter_factory
 ```
 
-Check your environment when the `doctor` command is available:
+Check your environment:
 
 ```bash
 flutter_factory doctor
@@ -167,25 +170,37 @@ flutter_factory doctor
 Create a new Flutter application:
 
 ```bash
-flutter_factory create my_app --state riverpod --auth --offline
+flutter_factory create my_app --org com.fiskindal --state riverpod --auth --offline
 ```
 
 Generate a new feature:
 
 ```bash
-flutter_factory add feature auth
+flutter_factory add feature profile
 ```
 
 Generate a page inside a feature:
 
 ```bash
-flutter_factory add page login --feature auth
+flutter_factory add page dashboard --feature profile
 ```
 
 Generate an API service:
 
 ```bash
-flutter_factory add api auth --endpoint /v1/auth
+flutter_factory add api billing --endpoint /v1/billing
+```
+
+Generate without running Freezed/build_runner immediately:
+
+```bash
+flutter_factory add api billing --endpoint /v1/billing --no-codegen
+```
+
+Overwrite generated files intentionally:
+
+```bash
+flutter_factory add page dashboard --feature profile --force
 ```
 
 Run interactive setup:
@@ -233,16 +248,26 @@ flutter-factory turns that repetitive setup into a fast, consistent, CLI-driven 
 
 flutter-factory is not just a starter template. It is a repeatable app factory for Flutter teams that want speed, consistency, and production-minded defaults.
 
+## Available Now
+
+- Local CLI activation with `dart pub global activate -s path ./cli`.
+- `flutter_factory doctor` environment checks.
+- `flutter_factory create <app_name> --org <reverse.domain>` with Flutter platform folders.
+- Feature, API service, page, usecase, and widget generation.
+- Default collision protection with opt-in `--force`.
+- Optional `add api --no-codegen`.
+- Generated app smoke target: `flutter analyze` and `flutter test`.
+
 ## Roadmap
 
-- [ ] MVP app generator with Clean Architecture and feature-first structure.
-- [ ] Core bricks for feature, page, API service, repository, model, and use case generation.
-- [ ] `flutter_factory doctor` environment checks.
-- [ ] Riverpod-first project template.
+- [x] MVP app generator with Clean Architecture and feature-first structure.
+- [x] Core bricks for feature, page, API service, widget, and use case generation.
+- [x] `flutter_factory doctor` environment checks.
+- [x] Riverpod-first project template.
 - [ ] Bloc-compatible project template.
-- [ ] Dio networking module with interceptors and typed error handling.
-- [ ] GoRouter setup with generated route examples.
-- [ ] Freezed and json_serializable model generation.
+- [x] Dio networking module with interceptors and typed error handling.
+- [x] GoRouter setup with generated route examples.
+- [x] Freezed and json_serializable model generation.
 - [ ] Testing presets for unit, widget, and integration tests.
 - [ ] CI/CD starter workflows.
 - [ ] Multiple app templates for SaaS, marketplace, admin panel, and mobile-first products.

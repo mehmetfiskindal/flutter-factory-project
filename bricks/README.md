@@ -12,15 +12,18 @@ From the repository root, use the local brick registry:
 
 ```bash
 mason get
-mason make feature --name auth --state_management riverpod
-mason make api_service --name auth --endpoint /v1/auth
+mason make feature --name profile --state_management riverpod
+mason make api_service --name billing --endpoint /v1/billing
+mason make page --name dashboard --feature profile
+mason make usecase --name sync_profile --feature profile
+mason make widget --name profile_tile --feature profile
 ```
 
 Or add a single brick manually from a local path:
 
 ```bash
 mason add feature --path bricks/feature
-mason make feature --name auth --state_management riverpod
+mason make feature --name profile --state_management riverpod
 ```
 
 Expected structure per brick:
@@ -31,10 +34,10 @@ Expected structure per brick:
 - `README.md`: usage notes and example generated output for that brick.
 - `test/`: optional generation tests for important output.
 
-Current planned bricks:
+Current bricks:
 
 - `feature/`: creates a full feature module with Riverpod or Bloc presentation scaffolding.
 - `page/`: creates a page inside an existing feature.
-- `api_service/`: creates Dio-based API service scaffolding.
+- `api_service/`: creates Dio-based API service scaffolding with Freezed model generation.
 - `usecase/`: creates a domain use case.
 - `widget/`: creates reusable feature or shared widgets.

@@ -12,3 +12,8 @@ vars:
     description: Optional REST endpoint. Defaults to /<name-param-case>.
     default: ""
     prompt: What is the REST endpoint?
+  run_codegen:
+    type: boolean
+    description: Whether build_runner should run after generation.
+    default: true
+    prompt: Run code generation?

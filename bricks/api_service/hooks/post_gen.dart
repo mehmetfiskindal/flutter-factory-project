@@ -3,6 +3,13 @@ import 'dart:io';
 import 'package:mason/mason.dart';
 
 Future<void> run(HookContext context) async {
+  if (context.vars['run_codegen'] == false) {
+    context.logger.info(
+      'Skipped code generation. Run dart run build_runner build later.',
+    );
+    return;
+  }
+
   final pubspec = File('pubspec.yaml');
   if (!pubspec.existsSync()) {
     return;

@@ -6,6 +6,7 @@ class FlutterFactoryConfig {
   const FlutterFactoryConfig({
     this.stateManagement,
     this.backend,
+    this.organization,
     this.auth = false,
     this.offline = false,
   });
@@ -14,6 +15,7 @@ class FlutterFactoryConfig {
 
   final String? stateManagement;
   final String? backend;
+  final String? organization;
   final bool auth;
   final bool offline;
 
@@ -34,6 +36,7 @@ class FlutterFactoryConfig {
     return FlutterFactoryConfig(
       stateManagement: document['state_management'] as String?,
       backend: document['backend'] as String?,
+      organization: document['organization'] as String?,
       auth: document['auth'] as bool? ?? false,
       offline: document['offline_support'] as bool? ?? false,
     );
@@ -47,6 +50,7 @@ class FlutterFactoryConfig {
     file.writeAsStringSync('''
 state_management: ${stateManagement ?? 'riverpod'}
 backend: ${backend ?? 'rest_firebase_hybrid'}
+organization: ${organization ?? 'com.example'}
 auth: $auth
 offline_support: $offline
 ''');

@@ -25,6 +25,14 @@ class AddCommand extends Command<int> {
       logger: logger,
       masonService: masonService,
     ));
+    addSubcommand(AddUseCaseCommand(
+      logger: logger,
+      masonService: masonService,
+    ));
+    addSubcommand(AddWidgetCommand(
+      logger: logger,
+      masonService: masonService,
+    ));
   }
 
   @override
@@ -46,6 +54,11 @@ class AddFeatureCommand extends Command<int> {
       allowed: const ['riverpod', 'bloc'],
       help: 'State management solution for the generated feature.',
     );
+    argParser.addFlag(
+      'force',
+      negatable: false,
+      help: 'Overwrite generated files if they already exist.',
+    );
   }
 
   final Logger _logger;
@@ -56,7 +69,7 @@ class AddFeatureCommand extends Command<int> {
 
   @override
   String get invocation =>
-      'flutter_factory add feature <name> [--state riverpod|bloc]';
+      'flutter_factory add feature <name> [--state riverpod|bloc] [--force]';
 
   @override
   String get name => 'feature';
@@ -69,7 +82,8 @@ class AddFeatureCommand extends Command<int> {
     }
 
     validateDartIdentifier(featureName, label: 'name');
-    ensureFeatureDoesNotExist(featureName);
+    final force = argResults?['force'] as bool? ?? false;
+    ensureFeatureDoesNotExist(featureName, force: force);
 
     final config = FlutterFactoryConfig.load();
     final stateManagement =
@@ -79,6 +93,7 @@ class AddFeatureCommand extends Command<int> {
 
     await _masonService.generate(
       brickName: 'feature',
+      force: force,
       vars: {
         'name': featureName,
         'state_management': stateManagement,
@@ -100,6 +115,17 @@ class AddApiCommand extends Command<int> {
       'endpoint',
       help: 'REST endpoint. Defaults to /<name-param-case>.',
     );
+    argParser
+      ..addFlag(
+        'force',
+        negatable: false,
+        help: 'Overwrite generated files if they already exist.',
+      )
+      ..addFlag(
+        'codegen',
+        defaultsTo: true,
+        help: 'Run build_runner after generation.',
+      );
   }
 
   final Logger _logger;
@@ -111,7 +137,7 @@ class AddApiCommand extends Command<int> {
 
   @override
   String get invocation =>
-      'flutter_factory add api <name> [--endpoint <endpoint>]';
+      'flutter_factory add api <name> [--endpoint <endpoint>] [--no-codegen] [--force]';
 
   @override
   String get name => 'api';
@@ -124,16 +150,20 @@ class AddApiCommand extends Command<int> {
     }
 
     validateDartIdentifier(apiName, label: 'name');
-    ensureFeatureDoesNotExist(apiName);
+    final force = argResults?['force'] as bool? ?? false;
+    ensureFeatureDoesNotExist(apiName, force: force);
 
     final endpoint = argResults?['endpoint'] as String?;
+    final codegen = argResults?['codegen'] as bool? ?? true;
 
     _logger.info('Adding API "$apiName"...');
 
     await _masonService.generate(
       brickName: 'api_service',
+      force: force,
       vars: {
         'name': apiName,
+        'run_codegen': codegen,
         if (endpoint != null) 'endpoint': endpoint,
       },
     );
@@ -143,12 +173,12 @@ class AddApiCommand extends Command<int> {
   }
 }
 
-void ensureFeatureDoesNotExist(String featureName) {
+void ensureFeatureDoesNotExist(String featureName, {required bool force}) {
   final featureDirectory = Directory(
     p.join(Directory.current.path, 'lib', 'features', featureName),
   );
 
-  if (!featureDirectory.existsSync()) {
+  if (!featureDirectory.existsSync() || force) {
     return;
   }
 
@@ -170,6 +200,11 @@ class AddPageCommand extends Command<int> {
       mandatory: true,
       help: 'Target feature name.',
     );
+    argParser.addFlag(
+      'force',
+      negatable: false,
+      help: 'Overwrite generated files if they already exist.',
+    );
   }
 
   final Logger _logger;
@@ -180,7 +215,7 @@ class AddPageCommand extends Command<int> {
 
   @override
   String get invocation =>
-      'flutter_factory add page <name> --feature <feature_name>';
+      'flutter_factory add page <name> --feature <feature_name> [--force]';
 
   @override
   String get name => 'page';
@@ -196,11 +231,24 @@ class AddPageCommand extends Command<int> {
 
     final featureName = argResults?['feature'] as String;
     validateDartIdentifier(featureName, label: 'feature');
+    final force = argResults?['force'] as bool? ?? false;
+    ensureFileDoesNotExist(
+      p.join(
+        'lib',
+        'features',
+        featureName,
+        'presentation',
+        'views',
+        '${pageName}_view.dart',
+      ),
+      force: force,
+    );
 
     _logger.info('Adding page "$pageName" to feature "$featureName"...');
 
     await _masonService.generate(
       brickName: 'page',
+      force: force,
       vars: {
         'name': pageName,
         'feature': featureName,
@@ -210,4 +258,161 @@ class AddPageCommand extends Command<int> {
     _logger.success('Page "$pageName" generated.');
     return ExitCode.success.code;
   }
+}
+
+class AddUseCaseCommand extends Command<int> {
+  AddUseCaseCommand({
+    required Logger logger,
+    required MasonService masonService,
+  })  : _logger = logger,
+        _masonService = masonService {
+    argParser
+      ..addOption(
+        'feature',
+        mandatory: true,
+        help: 'Target feature name.',
+      )
+      ..addFlag(
+        'force',
+        negatable: false,
+        help: 'Overwrite generated files if they already exist.',
+      );
+  }
+
+  final Logger _logger;
+  final MasonService _masonService;
+
+  @override
+  String get description => 'Add a domain use case inside a feature.';
+
+  @override
+  String get invocation =>
+      'flutter_factory add usecase <name> --feature <feature_name> [--force]';
+
+  @override
+  String get name => 'usecase';
+
+  @override
+  Future<int> run() async {
+    final useCaseName = argResults?.rest.singleOrNull;
+    if (useCaseName == null) {
+      throw UsageException('Missing <name>.', usage);
+    }
+
+    validateDartIdentifier(useCaseName, label: 'name');
+
+    final featureName = argResults?['feature'] as String;
+    validateDartIdentifier(featureName, label: 'feature');
+    final force = argResults?['force'] as bool? ?? false;
+    ensureFileDoesNotExist(
+      p.join(
+        'lib',
+        'features',
+        featureName,
+        'domain',
+        'usecases',
+        '$useCaseName.dart',
+      ),
+      force: force,
+    );
+
+    _logger.info('Adding use case "$useCaseName" to feature "$featureName"...');
+
+    await _masonService.generate(
+      brickName: 'usecase',
+      force: force,
+      vars: {
+        'name': useCaseName,
+        'feature': featureName,
+      },
+    );
+
+    _logger.success('Use case "$useCaseName" generated.');
+    return ExitCode.success.code;
+  }
+}
+
+class AddWidgetCommand extends Command<int> {
+  AddWidgetCommand({
+    required Logger logger,
+    required MasonService masonService,
+  })  : _logger = logger,
+        _masonService = masonService {
+    argParser
+      ..addOption(
+        'feature',
+        mandatory: true,
+        help: 'Target feature name.',
+      )
+      ..addFlag(
+        'force',
+        negatable: false,
+        help: 'Overwrite generated files if they already exist.',
+      );
+  }
+
+  final Logger _logger;
+  final MasonService _masonService;
+
+  @override
+  String get description => 'Add a reusable widget inside a feature.';
+
+  @override
+  String get invocation =>
+      'flutter_factory add widget <name> --feature <feature_name> [--force]';
+
+  @override
+  String get name => 'widget';
+
+  @override
+  Future<int> run() async {
+    final widgetName = argResults?.rest.singleOrNull;
+    if (widgetName == null) {
+      throw UsageException('Missing <name>.', usage);
+    }
+
+    validateDartIdentifier(widgetName, label: 'name');
+
+    final featureName = argResults?['feature'] as String;
+    validateDartIdentifier(featureName, label: 'feature');
+    final force = argResults?['force'] as bool? ?? false;
+    ensureFileDoesNotExist(
+      p.join(
+        'lib',
+        'features',
+        featureName,
+        'presentation',
+        'widgets',
+        '$widgetName.dart',
+      ),
+      force: force,
+    );
+
+    _logger.info('Adding widget "$widgetName" to feature "$featureName"...');
+
+    await _masonService.generate(
+      brickName: 'widget',
+      force: force,
+      vars: {
+        'name': widgetName,
+        'feature': featureName,
+      },
+    );
+
+    _logger.success('Widget "$widgetName" generated.');
+    return ExitCode.success.code;
+  }
+}
+
+void ensureFileDoesNotExist(String relativePath, {required bool force}) {
+  final file = File(p.join(Directory.current.path, relativePath));
+
+  if (!file.existsSync() || force) {
+    return;
+  }
+
+  throw UsageException(
+    'File already exists at ${file.path}. Use --force to overwrite it.',
+    '',
+  );
 }

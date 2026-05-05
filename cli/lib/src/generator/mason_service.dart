@@ -17,6 +17,7 @@ class MasonService {
     required String brickName,
     required Map<String, dynamic> vars,
     String? targetDirectory,
+    bool force = false,
   }) async {
     final brickDirectory = _resolveBrickDirectory(brickName);
     final target = Directory(
@@ -42,6 +43,9 @@ class MasonService {
 
     await generator.generate(
       DirectoryGeneratorTarget(target),
+      fileConflictResolution: force
+          ? FileConflictResolution.overwrite
+          : FileConflictResolution.skip,
       logger: _logger,
       vars: generationVars,
     );

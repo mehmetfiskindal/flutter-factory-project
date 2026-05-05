@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
@@ -22,6 +24,10 @@ class CreateCommand extends Command<int> {
         allowed: const ['rest_firebase_hybrid'],
         help: 'Backend preset.',
       )
+      ..addOption(
+        'org',
+        help: 'Reverse-domain organization id, for example com.fiskindal.',
+      )
       ..addFlag(
         'auth',
         help: 'Generate authentication scaffolding.',
@@ -40,7 +46,7 @@ class CreateCommand extends Command<int> {
 
   @override
   String get invocation =>
-      'flutter_factory create <app_name> [--state riverpod|bloc] [--auth] [--offline]';
+      'flutter_factory create <app_name> [--org com.example] [--state riverpod|bloc] [--auth] [--offline]';
 
   @override
   String get name => 'create';
@@ -55,6 +61,10 @@ class CreateCommand extends Command<int> {
     validateDartIdentifier(appName, label: 'app_name');
 
     final config = FlutterFactoryConfig.load();
+    final organization =
+        argResults?['org'] as String? ?? config.organization ?? 'com.example';
+    validateReverseDomain(organization, label: 'org');
+
     final stateManagement =
         argResults?['state'] as String? ?? config.stateManagement ?? 'riverpod';
     final backend = argResults?['backend'] as String? ??
@@ -64,12 +74,15 @@ class CreateCommand extends Command<int> {
     final includeOffline = argResults?['offline'] as bool? ?? config.offline;
 
     _logger.info('Creating Flutter project "$appName"...');
+    await _createFlutterShell(appName: appName, organization: organization);
 
     await _masonService.generate(
       brickName: 'starter',
       targetDirectory: appName,
+      force: true,
       vars: {
         'app_name': appName,
+        'org_name': organization,
         'state_management': stateManagement,
         'backend': backend,
         'auth': includeAuth,
@@ -79,5 +92,23 @@ class CreateCommand extends Command<int> {
 
     _logger.success('Project "$appName" generated.');
     return ExitCode.success.code;
+  }
+
+  Future<void> _createFlutterShell({
+    required String appName,
+    required String organization,
+  }) async {
+    final result = await Process.run(
+      'flutter',
+      ['create', '--org', organization, appName],
+      runInShell: true,
+    );
+
+    if (result.exitCode != ExitCode.success.code) {
+      throw UsageException(
+        'flutter create failed:\n${result.stderr}',
+        usage,
+      );
+    }
   }
 }

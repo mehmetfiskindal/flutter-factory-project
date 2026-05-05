@@ -4,6 +4,7 @@ import 'package:mason_logger/mason_logger.dart';
 import 'commands/add_command.dart';
 import 'commands/config_command.dart';
 import 'commands/create_command.dart';
+import 'commands/doctor_command.dart';
 import 'generator/mason_service.dart';
 
 class FlutterFactoryCommandRunner extends CommandRunner<int> {
@@ -27,6 +28,7 @@ class FlutterFactoryCommandRunner extends CommandRunner<int> {
     addCommand(CreateCommand(logger: logger, masonService: generator));
     addCommand(AddCommand(logger: logger, masonService: generator));
     addCommand(ConfigCommand(logger: logger));
+    addCommand(DoctorCommand(logger: logger));
   }
 
   final Logger _logger;

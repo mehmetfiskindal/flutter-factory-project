@@ -1,4 +1,4 @@
-final class {{name.pascalCase()}}Entity {
+class {{name.pascalCase()}}Entity {
   const {{name.pascalCase()}}Entity({
     required this.id,
     required this.title,
