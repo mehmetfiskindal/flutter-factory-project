@@ -6,6 +6,30 @@ Bundle identifier prefix: `{{org_name}}`
 
 State management: `{{state_management}}`
 
+Backend: `{{backend}}`
+
+{{#is_firebase_backend}}## Firebase Setup
+
+This project uses Firebase Core, Authentication, Cloud Firestore, and Cloud Storage.
+
+Install the required CLIs:
+
+```bash
+npm install -g firebase-tools
+dart pub global activate flutterfire_cli
+```
+
+Then connect this app to your Firebase project:
+
+```bash
+firebase login
+flutterfire configure
+```
+
+`flutterfire configure` replaces the placeholder `lib/firebase_options.dart`.
+
+{{/is_firebase_backend}}
+
 ## Run
 
 ```bash

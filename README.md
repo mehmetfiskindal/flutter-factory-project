@@ -165,12 +165,15 @@ Check your environment:
 
 ```bash
 flutter_factory doctor
+flutter_factory doctor --firebase
 ```
 
 Create a new Flutter application:
 
 ```bash
 flutter_factory create my_app --org com.fiskindal --state riverpod --auth --offline
+flutter_factory create my_app --org com.fiskindal --state riverpod --backend firebase
+flutter_factory create my_app --org com.fiskindal --state bloc --backend firebase
 ```
 
 Generate a new feature:
@@ -217,6 +220,7 @@ flutter-factory is designed to support modern Flutter production stacks while ke
 | --- | --- | --- |
 | State Management | Riverpod | Bloc |
 | Networking | Dio | Interceptors, retries, auth headers |
+| Backend | REST + Firebase hybrid | Firebase Auth, Firestore, Cloud Storage |
 | Routing | GoRouter | Route guards, shell routes |
 | Models | Freezed | Equatable |
 | Serialization | json_serializable | Custom converters |
@@ -257,6 +261,35 @@ flutter-factory is not just a starter template. It is a repeatable app factory f
 - Default collision protection with opt-in `--force`.
 - Optional `add api --no-codegen`.
 - Generated app smoke target: `flutter analyze` and `flutter test`.
+
+## Firebase Projects
+
+Use the Firebase backend preset when the app should be generated without REST/Dio scaffolding:
+
+```bash
+flutter_factory create my_app --backend firebase --state riverpod
+flutter_factory create my_app --backend firebase --state bloc
+```
+
+Firebase tooling checks are available with:
+
+```bash
+flutter_factory doctor --firebase
+```
+
+Firebase CLI is distributed as the npm package `firebase-tools`:
+
+```bash
+npm install -g firebase-tools
+dart pub global activate flutterfire_cli
+```
+
+`dart pub global activate flutterfire_cli` installs the FlutterFire CLI. Actual Firebase project and app configuration is still done from the generated project with:
+
+```bash
+firebase login
+flutterfire configure
+```
 
 ## Roadmap
 

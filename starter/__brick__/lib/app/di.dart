@@ -1,5 +1,4 @@
-{{#is_riverpod}}
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+{{#is_riverpod}}{{#is_rest_backend}}import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -28,8 +27,25 @@ Future<ProviderContainer> configureDependencies(
 
   return container;
 }
-{{/is_riverpod}}{{#is_bloc}}
-import 'package:dio/dio.dart';
+{{/is_rest_backend}}{{#is_firebase_backend}}import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../features/auth/presentation/providers/auth_controller.dart';
+import 'flavor.dart';
+
+Future<ProviderContainer> configureDependencies(
+  AppEnvironment environment,
+) async {
+  final container = ProviderContainer(
+    overrides: [
+      appEnvironmentProvider.overrideWithValue(environment),
+    ],
+  );
+
+  await container.read(authControllerProvider.future);
+
+  return container;
+}
+{{/is_firebase_backend}}{{/is_riverpod}}{{#is_bloc}}{{#is_rest_backend}}import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
@@ -154,4 +170,66 @@ Dio _createDio({
 
   return rawDio;
 }
-{{/is_bloc}}
+{{/is_rest_backend}}{{#is_firebase_backend}}import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:firebase_storage/firebase_storage.dart';
+
+import '../core/firebase/cloud_storage_service.dart';
+import '../core/firebase/firestore_service.dart';
+import '../features/auth/data/repositories/auth_repository_impl.dart';
+import '../features/auth/domain/repositories/auth_repository.dart';
+import '../features/auth/domain/usecases/get_current_user.dart';
+import '../features/auth/domain/usecases/sign_in.dart';
+import '../features/auth/domain/usecases/sign_out.dart';
+import 'flavor.dart';
+
+class AppDependencies {
+  const AppDependencies({
+    required this.environment,
+    required this.firebaseAuth,
+    required this.firestore,
+    required this.storage,
+    required this.firestoreService,
+    required this.cloudStorageService,
+    required this.authRepository,
+    required this.getCurrentUserUseCase,
+    required this.signInUseCase,
+    required this.signOutUseCase,
+  });
+
+  final AppEnvironment environment;
+  final firebase_auth.FirebaseAuth firebaseAuth;
+  final FirebaseFirestore firestore;
+  final FirebaseStorage storage;
+  final FirestoreService firestoreService;
+  final CloudStorageService cloudStorageService;
+  final AuthRepository authRepository;
+  final GetCurrentUserUseCase getCurrentUserUseCase;
+  final SignInUseCase signInUseCase;
+  final SignOutUseCase signOutUseCase;
+}
+
+Future<AppDependencies> configureDependencies(
+  AppEnvironment environment,
+) async {
+  final firebaseAuth = firebase_auth.FirebaseAuth.instance;
+  final firestore = FirebaseFirestore.instance;
+  final storage = FirebaseStorage.instance;
+  final firestoreService = FirestoreService(firestore);
+  final cloudStorageService = CloudStorageService(storage);
+  final authRepository = AuthRepositoryImpl(firebaseAuth: firebaseAuth);
+
+  return AppDependencies(
+    environment: environment,
+    firebaseAuth: firebaseAuth,
+    firestore: firestore,
+    storage: storage,
+    firestoreService: firestoreService,
+    cloudStorageService: cloudStorageService,
+    authRepository: authRepository,
+    getCurrentUserUseCase: GetCurrentUserUseCase(authRepository),
+    signInUseCase: SignInUseCase(authRepository),
+    signOutUseCase: SignOutUseCase(authRepository),
+  );
+}
+{{/is_firebase_backend}}{{/is_bloc}}

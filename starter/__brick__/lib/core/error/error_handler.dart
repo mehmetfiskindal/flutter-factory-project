@@ -1,4 +1,7 @@
+{{#is_rest_backend}}
 import 'package:dio/dio.dart';
+{{/is_rest_backend}}{{#is_firebase_backend}}import 'package:firebase_core/firebase_core.dart';
+{{/is_firebase_backend}}
 
 import 'app_exception.dart';
 import 'failure.dart';
@@ -12,9 +15,15 @@ abstract final class ErrorHandler {
       return error;
     }
 
+    {{#is_rest_backend}}
     if (error is DioException) {
       return _fromDioException(error, stackTrace);
     }
+    {{/is_rest_backend}}{{#is_firebase_backend}}
+    if (error is FirebaseException) {
+      return _fromFirebaseException(error, stackTrace);
+    }
+    {{/is_firebase_backend}}
 
     if (error is FormatException || error is ArgumentError) {
       return ValidationException(
@@ -44,6 +53,7 @@ abstract final class ErrorHandler {
     return toException(error).message;
   }
 
+  {{#is_rest_backend}}
   static AppException _fromDioException(
     DioException error,
     StackTrace? stackTrace,
@@ -107,4 +117,46 @@ abstract final class ErrorHandler {
 
     return error.response?.statusMessage;
   }
+  {{/is_rest_backend}}{{#is_firebase_backend}}
+  static AppException _fromFirebaseException(
+    FirebaseException error,
+    StackTrace? stackTrace,
+  ) {
+    final message = error.message ?? 'Firebase request failed.';
+
+    return switch (error.code) {
+      'permission-denied' || 'unauthenticated' => UnauthorizedException(
+          message: message,
+          code: error.code,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      'invalid-email' ||
+      'user-disabled' ||
+      'user-not-found' ||
+      'wrong-password' ||
+      'weak-password' ||
+      'email-already-in-use' =>
+        ValidationException(
+          message: message,
+          code: error.code,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      'network-request-failed' || 'unavailable' || 'deadline-exceeded' =>
+        NetworkException(
+          message: message,
+          code: error.code,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      _ => UnknownAppException(
+          message: message,
+          code: error.code,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+    };
+  }
+  {{/is_firebase_backend}}
 }

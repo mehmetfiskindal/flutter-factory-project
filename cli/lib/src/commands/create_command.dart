@@ -28,7 +28,7 @@ class CreateCommand extends Command<int> {
       )
       ..addOption(
         'backend',
-        allowed: const ['rest_firebase_hybrid'],
+        allowed: const ['rest_firebase_hybrid', 'firebase'],
         help: 'Backend preset.',
       )
       ..addOption(
@@ -54,7 +54,7 @@ class CreateCommand extends Command<int> {
 
   @override
   String get invocation =>
-      'flutter_factory create <app_name> [--org com.example] [--state riverpod|bloc] [--auth] [--offline]';
+      'flutter_factory create <app_name> [--org com.example] [--state riverpod|bloc] [--backend rest_firebase_hybrid|firebase] [--auth] [--offline]';
 
   @override
   String get name => 'create';
@@ -119,7 +119,7 @@ Future<void> createFlutterShell({
   if (result.exitCode != ExitCode.success.code) {
     throw UsageException(
       'flutter create failed:\n${result.stderr}',
-      'flutter_factory create <app_name> [--org com.example] [--state riverpod|bloc] [--auth] [--offline]',
+      'flutter_factory create <app_name> [--org com.example] [--state riverpod|bloc] [--backend rest_firebase_hybrid|firebase] [--auth] [--offline]',
     );
   }
 }

@@ -13,6 +13,8 @@ The same brick supports both state-management presets:
 ```bash
 flutter_factory create my_app --state riverpod
 flutter_factory create my_app --state bloc
+flutter_factory create my_app --state riverpod --backend firebase
+flutter_factory create my_app --state bloc --backend firebase
 ```
 
 Expected core files:

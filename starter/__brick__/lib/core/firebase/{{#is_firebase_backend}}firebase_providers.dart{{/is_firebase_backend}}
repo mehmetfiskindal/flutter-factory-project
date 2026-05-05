@@ -1,0 +1,33 @@
+{{#is_riverpod}}
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'cloud_storage_service.dart';
+import 'firestore_service.dart';
+{{/is_riverpod}}
+
+export 'cloud_storage_service.dart';
+export 'firestore_service.dart';
+
+{{#is_riverpod}}final firebaseAuthProvider = Provider<firebase_auth.FirebaseAuth>((ref) {
+  return firebase_auth.FirebaseAuth.instance;
+});
+
+final firebaseFirestoreProvider = Provider<FirebaseFirestore>((ref) {
+  return FirebaseFirestore.instance;
+});
+
+final firebaseStorageProvider = Provider<FirebaseStorage>((ref) {
+  return FirebaseStorage.instance;
+});
+
+final firestoreServiceProvider = Provider<FirestoreService>((ref) {
+  return FirestoreService(ref.watch(firebaseFirestoreProvider));
+});
+
+final cloudStorageServiceProvider = Provider<CloudStorageService>((ref) {
+  return CloudStorageService(ref.watch(firebaseStorageProvider));
+});
+{{/is_riverpod}}

@@ -26,6 +26,7 @@ vars:
     default: rest_firebase_hybrid
     values:
       - rest_firebase_hybrid
+      - firebase
     prompt: Which backend preset should be used?
   auth:
     type: boolean

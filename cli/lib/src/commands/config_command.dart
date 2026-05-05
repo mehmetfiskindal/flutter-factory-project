@@ -33,7 +33,7 @@ class ConfigCommand extends Command<int> {
         [
           {
             'question': 'Backend?',
-            'options': ['REST + Firebase hybrid'],
+            'options': ['REST + Firebase hybrid', 'Firebase'],
           },
           'backend',
         ],
@@ -79,10 +79,7 @@ class ConfigCommand extends Command<int> {
   }
 
   String _normalizeBackend(String? value) {
-    return switch (value) {
-      'REST + Firebase hybrid' => 'rest_firebase_hybrid',
-      _ => 'rest_firebase_hybrid',
-    };
+    return normalizeBackendPreset(value);
   }
 
   String _normalizeOrganization(String? value) {
@@ -93,4 +90,14 @@ class ConfigCommand extends Command<int> {
 
     return trimmed;
   }
+}
+
+String normalizeBackendPreset(String? value) {
+  return switch (value?.trim().toLowerCase()) {
+    'firebase' => 'firebase',
+    'rest_firebase_hybrid' ||
+    'rest + firebase hybrid' =>
+      'rest_firebase_hybrid',
+    _ => 'rest_firebase_hybrid',
+  };
 }
