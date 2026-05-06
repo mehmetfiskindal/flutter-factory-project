@@ -178,9 +178,12 @@ import '../core/firebase/cloud_storage_service.dart';
 import '../core/firebase/firestore_service.dart';
 import '../features/auth/data/repositories/auth_repository_impl.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
+import '../features/auth/domain/usecases/create_account.dart';
 import '../features/auth/domain/usecases/get_current_user.dart';
+import '../features/auth/domain/usecases/send_password_reset_email.dart';
 import '../features/auth/domain/usecases/sign_in.dart';
 import '../features/auth/domain/usecases/sign_out.dart';
+import '../features/auth/domain/usecases/watch_auth_state_changes.dart';
 import 'flavor.dart';
 
 class AppDependencies {
@@ -192,9 +195,12 @@ class AppDependencies {
     required this.firestoreService,
     required this.cloudStorageService,
     required this.authRepository,
+    required this.createAccountUseCase,
     required this.getCurrentUserUseCase,
+    required this.sendPasswordResetEmailUseCase,
     required this.signInUseCase,
     required this.signOutUseCase,
+    required this.watchAuthStateChangesUseCase,
   });
 
   final AppEnvironment environment;
@@ -204,9 +210,12 @@ class AppDependencies {
   final FirestoreService firestoreService;
   final CloudStorageService cloudStorageService;
   final AuthRepository authRepository;
+  final CreateAccountUseCase createAccountUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
+  final SendPasswordResetEmailUseCase sendPasswordResetEmailUseCase;
   final SignInUseCase signInUseCase;
   final SignOutUseCase signOutUseCase;
+  final WatchAuthStateChangesUseCase watchAuthStateChangesUseCase;
 }
 
 Future<AppDependencies> configureDependencies(
@@ -227,9 +236,13 @@ Future<AppDependencies> configureDependencies(
     firestoreService: firestoreService,
     cloudStorageService: cloudStorageService,
     authRepository: authRepository,
+    createAccountUseCase: CreateAccountUseCase(authRepository),
     getCurrentUserUseCase: GetCurrentUserUseCase(authRepository),
+    sendPasswordResetEmailUseCase:
+        SendPasswordResetEmailUseCase(authRepository),
     signInUseCase: SignInUseCase(authRepository),
     signOutUseCase: SignOutUseCase(authRepository),
+    watchAuthStateChangesUseCase: WatchAuthStateChangesUseCase(authRepository),
   );
 }
 {{/is_firebase_backend}}{{/is_bloc}}

@@ -8,9 +8,15 @@ import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+{{#is_firebase_backend}}import '../../domain/usecases/create_account.dart';
+{{/is_firebase_backend}}
 import '../../domain/usecases/get_current_user.dart';
+{{#is_firebase_backend}}import '../../domain/usecases/send_password_reset_email.dart';
+{{/is_firebase_backend}}
 import '../../domain/usecases/sign_in.dart';
 import '../../domain/usecases/sign_out.dart';
+{{#is_firebase_backend}}import '../../domain/usecases/watch_auth_state_changes.dart';
+{{/is_firebase_backend}}
 
 {{#is_rest_backend}}
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
@@ -35,6 +41,25 @@ final getCurrentUserUseCaseProvider = Provider<GetCurrentUserUseCase>((ref) {
   return GetCurrentUserUseCase(ref.watch(authRepositoryProvider));
 });
 
+{{#is_firebase_backend}}final createAccountUseCaseProvider = Provider<CreateAccountUseCase>((ref) {
+  return CreateAccountUseCase(ref.watch(authRepositoryProvider));
+});
+
+final sendPasswordResetEmailUseCaseProvider =
+    Provider<SendPasswordResetEmailUseCase>((ref) {
+  return SendPasswordResetEmailUseCase(ref.watch(authRepositoryProvider));
+});
+
+final watchAuthStateChangesUseCaseProvider =
+    Provider<WatchAuthStateChangesUseCase>((ref) {
+  return WatchAuthStateChangesUseCase(ref.watch(authRepositoryProvider));
+});
+
+final authStateChangesProvider = StreamProvider<AuthUser?>((ref) {
+  return ref.watch(watchAuthStateChangesUseCaseProvider).call();
+});
+
+{{/is_firebase_backend}}
 final signInUseCaseProvider = Provider<SignInUseCase>((ref) {
   return SignInUseCase(ref.watch(authRepositoryProvider));
 });
@@ -49,9 +74,40 @@ final authControllerProvider =
 class AuthController extends AsyncNotifier<AuthUser?> {
   @override
   Future<AuthUser?> build() {
+    {{#is_firebase_backend}}ref.listen<AsyncValue<AuthUser?>>(
+      authStateChangesProvider,
+      (_, next) {
+        next.whenData((user) {
+          state = AsyncData(user);
+        });
+      },
+    );
+    ref.watch(authStateChangesProvider);
+
+    {{/is_firebase_backend}}
     return ref.watch(getCurrentUserUseCaseProvider).call();
   }
 
+  {{#is_firebase_backend}}Future<void> createAccount({
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() {
+      return ref.read(createAccountUseCaseProvider).call(
+            email: email,
+            password: password,
+          );
+    });
+  }
+
+  Future<void> sendPasswordResetEmail({
+    required String email,
+  }) async {
+    await ref.read(sendPasswordResetEmailUseCaseProvider).call(email: email);
+  }
+
+  {{/is_firebase_backend}}
   Future<void> signIn({
     required String email,
     required String password,
@@ -71,12 +127,20 @@ class AuthController extends AsyncNotifier<AuthUser?> {
     state = const AsyncData(null);
   }
 }
-{{/is_riverpod}}{{#is_bloc}}import 'package:bloc/bloc.dart';
+{{/is_riverpod}}{{#is_bloc}}{{#is_firebase_backend}}import 'dart:async';
+
+{{/is_firebase_backend}}import 'package:bloc/bloc.dart';
 
 import '../../domain/entities/auth_user.dart';
+{{#is_firebase_backend}}import '../../domain/usecases/create_account.dart';
+{{/is_firebase_backend}}
 import '../../domain/usecases/get_current_user.dart';
+{{#is_firebase_backend}}import '../../domain/usecases/send_password_reset_email.dart';
+{{/is_firebase_backend}}
 import '../../domain/usecases/sign_in.dart';
 import '../../domain/usecases/sign_out.dart';
+{{#is_firebase_backend}}import '../../domain/usecases/watch_auth_state_changes.dart';
+{{/is_firebase_backend}}
 
 sealed class AuthEvent {
   const AuthEvent();
@@ -86,6 +150,31 @@ final class AuthStarted extends AuthEvent {
   const AuthStarted();
 }
 
+{{#is_firebase_backend}}final class AuthStateChanged extends AuthEvent {
+  const AuthStateChanged(this.user);
+
+  final AuthUser? user;
+}
+
+final class CreateAccountSubmitted extends AuthEvent {
+  const CreateAccountSubmitted({
+    required this.email,
+    required this.password,
+  });
+
+  final String email;
+  final String password;
+}
+
+final class PasswordResetRequested extends AuthEvent {
+  const PasswordResetRequested({
+    required this.email,
+  });
+
+  final String email;
+}
+
+{{/is_firebase_backend}}
 final class SignInSubmitted extends AuthEvent {
   const SignInSubmitted({
     required this.email,
@@ -128,20 +217,42 @@ final class AuthFailure extends AuthState {
   final String message;
 }
 
+{{#is_firebase_backend}}final class AuthPasswordResetEmailSent extends AuthState {
+  const AuthPasswordResetEmailSent();
+}
+
+{{/is_firebase_backend}}
 final class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
+    {{#is_firebase_backend}}required CreateAccountUseCase createAccountUseCase,
+    required SendPasswordResetEmailUseCase sendPasswordResetEmailUseCase,
+    required WatchAuthStateChangesUseCase watchAuthStateChangesUseCase,
+    {{/is_firebase_backend}}
     required GetCurrentUserUseCase getCurrentUserUseCase,
     required SignInUseCase signInUseCase,
     required SignOutUseCase signOutUseCase,
-  })  : _getCurrentUserUseCase = getCurrentUserUseCase,
+  })  : {{#is_firebase_backend}}_createAccountUseCase = createAccountUseCase,
+        _sendPasswordResetEmailUseCase = sendPasswordResetEmailUseCase,
+        _watchAuthStateChangesUseCase = watchAuthStateChangesUseCase,
+        {{/is_firebase_backend}}_getCurrentUserUseCase = getCurrentUserUseCase,
         _signInUseCase = signInUseCase,
         _signOutUseCase = signOutUseCase,
         super(const AuthInitial()) {
     on<AuthStarted>(_onStarted);
+    {{#is_firebase_backend}}on<AuthStateChanged>(_onAuthStateChanged);
+    on<CreateAccountSubmitted>(_onCreateAccountSubmitted);
+    on<PasswordResetRequested>(_onPasswordResetRequested);
+    {{/is_firebase_backend}}
     on<SignInSubmitted>(_onSignInSubmitted);
     on<SignOutRequested>(_onSignOutRequested);
   }
 
+  {{#is_firebase_backend}}final CreateAccountUseCase _createAccountUseCase;
+  final SendPasswordResetEmailUseCase _sendPasswordResetEmailUseCase;
+  final WatchAuthStateChangesUseCase _watchAuthStateChangesUseCase;
+  StreamSubscription<AuthUser?>? _authSubscription;
+
+  {{/is_firebase_backend}}
   final GetCurrentUserUseCase _getCurrentUserUseCase;
   final SignInUseCase _signInUseCase;
   final SignOutUseCase _signOutUseCase;
@@ -152,6 +263,12 @@ final class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
 
+    {{#is_firebase_backend}}await _authSubscription?.cancel();
+    _authSubscription = _watchAuthStateChangesUseCase().listen((user) {
+      add(AuthStateChanged(user));
+    });
+
+    {{/is_firebase_backend}}
     try {
       final user = await _getCurrentUserUseCase();
       if (user == null) {
@@ -165,6 +282,49 @@ final class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  {{#is_firebase_backend}}void _onAuthStateChanged(
+    AuthStateChanged event,
+    Emitter<AuthState> emit,
+  ) {
+    final user = event.user;
+    if (user == null) {
+      emit(const AuthUnauthenticated());
+      return;
+    }
+
+    emit(AuthAuthenticated(user));
+  }
+
+  Future<void> _onCreateAccountSubmitted(
+    CreateAccountSubmitted event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+
+    try {
+      final user = await _createAccountUseCase(
+        email: event.email,
+        password: event.password,
+      );
+      emit(AuthAuthenticated(user));
+    } on Exception catch (error) {
+      emit(AuthFailure(error.toString()));
+    }
+  }
+
+  Future<void> _onPasswordResetRequested(
+    PasswordResetRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      await _sendPasswordResetEmailUseCase(email: event.email);
+      emit(const AuthPasswordResetEmailSent());
+    } on Exception catch (error) {
+      emit(AuthFailure(error.toString()));
+    }
+  }
+
+  {{/is_firebase_backend}}
   Future<void> _onSignInSubmitted(
     SignInSubmitted event,
     Emitter<AuthState> emit,
@@ -190,5 +350,12 @@ final class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await _signOutUseCase();
     emit(const AuthUnauthenticated());
   }
+
+  {{#is_firebase_backend}}@override
+  Future<void> close() async {
+    await _authSubscription?.cancel();
+    return super.close();
+  }
+  {{/is_firebase_backend}}
 }
 {{/is_bloc}}

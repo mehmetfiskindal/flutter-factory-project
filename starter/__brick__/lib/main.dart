@@ -36,10 +36,21 @@ Future<void> main() async {
       providers: [
         RepositoryProvider.value(value: dependencies.environment),
         RepositoryProvider.value(value: dependencies.authRepository),
+        {{#is_firebase_backend}}
+        RepositoryProvider.value(value: dependencies.createAccountUseCase),
+        {{/is_firebase_backend}}
         RepositoryProvider.value(value: dependencies.getCurrentUserUseCase),
+        {{#is_firebase_backend}}
+        RepositoryProvider.value(
+          value: dependencies.sendPasswordResetEmailUseCase,
+        ),
+        {{/is_firebase_backend}}
         RepositoryProvider.value(value: dependencies.signInUseCase),
         RepositoryProvider.value(value: dependencies.signOutUseCase),
         {{#is_firebase_backend}}
+        RepositoryProvider.value(
+          value: dependencies.watchAuthStateChangesUseCase,
+        ),
         RepositoryProvider.value(value: dependencies.firebaseAuth),
         RepositoryProvider.value(value: dependencies.firestore),
         RepositoryProvider.value(value: dependencies.storage),
@@ -49,9 +60,18 @@ Future<void> main() async {
       ],
       child: BlocProvider(
         create: (context) => AuthBloc(
+          {{#is_firebase_backend}}createAccountUseCase:
+              dependencies.createAccountUseCase,
+          {{/is_firebase_backend}}
           getCurrentUserUseCase: dependencies.getCurrentUserUseCase,
+          {{#is_firebase_backend}}sendPasswordResetEmailUseCase:
+              dependencies.sendPasswordResetEmailUseCase,
+          {{/is_firebase_backend}}
           signInUseCase: dependencies.signInUseCase,
           signOutUseCase: dependencies.signOutUseCase,
+          {{#is_firebase_backend}}watchAuthStateChangesUseCase:
+              dependencies.watchAuthStateChangesUseCase,
+          {{/is_firebase_backend}}
         )..add(const AuthStarted()),
         child: const {{app_name.pascalCase()}}Application(),
       ),

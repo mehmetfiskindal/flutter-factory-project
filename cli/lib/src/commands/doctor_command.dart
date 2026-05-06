@@ -81,6 +81,8 @@ class DoctorCommand extends Command<int> {
   Future<bool> _checkFirebaseTooling() async {
     var hasError = false;
 
+    _logger.info('Checking Firebase tooling...');
+
     hasError = !await _checkNodeVersion() || hasError;
     hasError = !await _checkExecutable(
           'npm',
@@ -159,7 +161,12 @@ class DoctorCommand extends Command<int> {
   Future<void> _checkFirebaseLoginState() async {
     final result = await _tryExecutable('firebase', ['login:list']);
     if (result != null && result.exitCode == ExitCode.success.code) {
-      _logger.success('Firebase login state available.');
+      final output = _commandOutput(result);
+      final firstLine = output.split('\n').firstWhere(
+            (line) => line.trim().isNotEmpty,
+            orElse: () => 'Firebase login state available.',
+          );
+      _logger.success(firstLine);
       return;
     }
 

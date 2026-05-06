@@ -13,6 +13,36 @@ class FirestoreService {
     return _firestore.doc(path);
   }
 
+  CollectionReference<T> typedCollection<T>({
+    required String path,
+    required T Function(
+      DocumentSnapshot<Map<String, dynamic>> snapshot,
+      SnapshotOptions? options,
+    ) fromFirestore,
+    required Map<String, Object?> Function(T value, SetOptions? options)
+        toFirestore,
+  }) {
+    return collection(path).withConverter<T>(
+      fromFirestore: fromFirestore,
+      toFirestore: toFirestore,
+    );
+  }
+
+  DocumentReference<T> typedDocument<T>({
+    required String path,
+    required T Function(
+      DocumentSnapshot<Map<String, dynamic>> snapshot,
+      SnapshotOptions? options,
+    ) fromFirestore,
+    required Map<String, Object?> Function(T value, SetOptions? options)
+        toFirestore,
+  }) {
+    return document(path).withConverter<T>(
+      fromFirestore: fromFirestore,
+      toFirestore: toFirestore,
+    );
+  }
+
   Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(String path) {
     return document(path).get();
   }

@@ -77,6 +77,16 @@ class _SignInViewState extends ConsumerState<SignInView> {
                             )
                           : const Text('Sign in'),
                     ),
+                    {{#is_firebase_backend}}const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: authState.isLoading ? null : _createAccount,
+                      child: const Text('Create account'),
+                    ),
+                    TextButton(
+                      onPressed: authState.isLoading ? null : _resetPassword,
+                      child: const Text('Forgot password?'),
+                    ),
+                    {{/is_firebase_backend}}
                     if (authState.hasError) ...[
                       const SizedBox(height: 16),
                       AppErrorView(error: authState.error!),
@@ -101,6 +111,41 @@ class _SignInViewState extends ConsumerState<SignInView> {
           password: _passwordController.text,
     );
   }
+
+  {{#is_firebase_backend}}Future<void> _createAccount() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    await ref.read(authControllerProvider.notifier).createAccount(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+  }
+
+  Future<void> _resetPassword() async {
+    final emailError = Validators.email(_emailController.text.trim());
+    if (emailError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(emailError)),
+      );
+      return;
+    }
+
+    await ref.read(authControllerProvider.notifier).sendPasswordResetEmail(
+          email: _emailController.text.trim(),
+        );
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Password reset email sent.')),
+    );
+  }
+
+  {{/is_firebase_backend}}
 }
 {{/is_riverpod}}{{#is_bloc}}
 class SignInView extends StatefulWidget {
@@ -125,7 +170,14 @@ class _SignInViewState extends State<SignInView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
-      listener: (context, state) {},
+      listener: (context, state) {
+        {{#is_firebase_backend}}if (state is AuthPasswordResetEmailSent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Password reset email sent.')),
+          );
+        }
+        {{/is_firebase_backend}}
+      },
       builder: (context, authState) {
         final isLoading = authState is AuthLoading;
         final errorMessage = authState is AuthFailure ? authState.message : null;
@@ -175,6 +227,16 @@ class _SignInViewState extends State<SignInView> {
                                 )
                               : const Text('Sign in'),
                         ),
+                        {{#is_firebase_backend}}const SizedBox(height: 8),
+                        OutlinedButton(
+                          onPressed: isLoading ? null : _createAccount,
+                          child: const Text('Create account'),
+                        ),
+                        TextButton(
+                          onPressed: isLoading ? null : _resetPassword,
+                          child: const Text('Forgot password?'),
+                        ),
+                        {{/is_firebase_backend}}
                         if (errorMessage != null) ...[
                           const SizedBox(height: 16),
                           AppErrorView(error: errorMessage),
@@ -203,5 +265,34 @@ class _SignInViewState extends State<SignInView> {
           ),
         );
   }
+
+  {{#is_firebase_backend}}void _createAccount() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    context.read<AuthBloc>().add(
+          CreateAccountSubmitted(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          ),
+        );
+  }
+
+  void _resetPassword() {
+    final emailError = Validators.email(_emailController.text.trim());
+    if (emailError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(emailError)),
+      );
+      return;
+    }
+
+    context.read<AuthBloc>().add(
+          PasswordResetRequested(email: _emailController.text.trim()),
+        );
+  }
+
+  {{/is_firebase_backend}}
 }
 {{/is_bloc}}

@@ -12,6 +12,10 @@ Backend: `{{backend}}`
 
 This project uses Firebase Core, Authentication, Cloud Firestore, and Cloud Storage.
 
+Firebase must be configured before the first app run. The generated
+`lib/firebase_options.dart` is only a compiling placeholder and intentionally
+throws until FlutterFire replaces it.
+
 Install the required CLIs:
 
 ```bash

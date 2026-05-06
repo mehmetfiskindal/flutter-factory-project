@@ -68,6 +68,28 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Stream<AuthUser?> authStateChanges() {
+    return _firebaseAuth.authStateChanges().map((user) => user?.toDomain());
+  }
+
+  @override
+  Future<AuthUser> createAccount({
+    required String email,
+    required String password,
+  }) async {
+    final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = credential.user;
+    if (user == null) {
+      throw StateError('Firebase Auth did not return a user.');
+    }
+
+    return user.toDomain();
+  }
+
+  @override
   Future<AuthUser> signIn({
     required String email,
     required String password,
@@ -82,6 +104,13 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     return user.toDomain();
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail({
+    required String email,
+  }) {
+    return _firebaseAuth.sendPasswordResetEmail(email: email);
   }
 
   @override
