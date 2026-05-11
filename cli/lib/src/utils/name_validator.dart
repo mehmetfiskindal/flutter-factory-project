@@ -27,3 +27,19 @@ void validateReverseDomain(String value, {required String label}) {
     '',
   );
 }
+
+final _routePathPattern = RegExp(r'^/[a-z0-9][a-z0-9_/-]*$');
+
+void validateRoutePath(String value) {
+  if (_routePathPattern.hasMatch(value) &&
+      !value.contains('//') &&
+      !value.endsWith('/')) {
+    return;
+  }
+
+  throw UsageException(
+    'Invalid <path> "$value". Use a route path like /dashboard or '
+        '/profile/dashboard.',
+    '',
+  );
+}

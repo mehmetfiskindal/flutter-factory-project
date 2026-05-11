@@ -36,6 +36,10 @@ Future<void> main() async {
     MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: dependencies.environment),
+        {{#include_offline}}RepositoryProvider.value(
+          value: dependencies.connectivityService,
+        ),
+        {{/include_offline}}
         {{#include_auth}}
         RepositoryProvider.value(value: dependencies.authRepository),
         {{#is_firebase_backend}}

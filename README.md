@@ -104,6 +104,8 @@ cd my_app
 flutter_factory add feature profile --state riverpod
 flutter_factory add api billing --endpoint /v1/billing
 flutter_factory add page dashboard --feature profile
+flutter_factory add page activity_log --feature profile --path /profile/activity
+flutter_factory verify --no-analyze
 ```
 
 If you do not want to activate the CLI globally, run it directly:
@@ -186,7 +188,12 @@ Generate a page inside a feature:
 
 ```bash
 flutter_factory add page dashboard --feature profile
+flutter_factory add page activity_log --feature profile --path /profile/activity
+flutter_factory add page draft --feature profile --no-route
 ```
+
+Generated pages are wired into the starter router automatically when route
+markers are present.
 
 Generate an API service:
 
@@ -210,6 +217,13 @@ Run interactive setup:
 
 ```bash
 flutter_factory config
+```
+
+Verify starter generation locally without GitHub Actions:
+
+```bash
+flutter_factory verify
+flutter_factory verify --full --no-analyze
 ```
 
 ## Supported Stack

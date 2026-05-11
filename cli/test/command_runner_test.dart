@@ -6,6 +6,7 @@ import 'package:flutter_factory/src/commands/config_command.dart';
 import 'package:flutter_factory/src/commands/add_command.dart';
 import 'package:flutter_factory/src/commands/create_command.dart';
 import 'package:flutter_factory/src/commands/doctor_command.dart';
+import 'package:flutter_factory/src/commands/verify_command.dart';
 import 'package:flutter_factory/src/config/flutter_factory_config.dart';
 import 'package:flutter_factory/src/generator/mason_service.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -145,6 +146,63 @@ void main() {
       1,
     );
     expect(_countOccurrences(router, 'DashboardRoute.route(),'), 1);
+  });
+
+  test('add page supports custom route path', () async {
+    _createGeneratedRouterFiles();
+    final masonService = _RecordingMasonService();
+    final runner = CommandRunner<int>('test', 'test')
+      ..addCommand(
+        AddPageCommand(
+          logger: Logger(),
+          masonService: masonService,
+        ),
+      );
+
+    final exitCode = await runner.run([
+      'page',
+      'dashboard',
+      '--feature',
+      'profile',
+      '--path',
+      '/profile/dashboard',
+    ]);
+
+    expect(exitCode, 0);
+    expect(masonService.vars['route_path'], '/profile/dashboard');
+
+    final routePaths = File(
+      'lib/core/router/route_paths.dart',
+    ).readAsStringSync();
+    expect(
+      routePaths,
+      contains("static const dashboard = '/profile/dashboard';"),
+    );
+  });
+
+  test('add page can skip route auto-wire', () async {
+    _createGeneratedRouterFiles();
+    final masonService = _RecordingMasonService();
+    final runner = CommandRunner<int>('test', 'test')
+      ..addCommand(
+        AddPageCommand(
+          logger: Logger(),
+          masonService: masonService,
+        ),
+      );
+
+    final exitCode = await runner.run([
+      'page',
+      'dashboard',
+      '--feature',
+      'profile',
+      '--no-route',
+    ]);
+
+    expect(exitCode, 0);
+
+    final router = File('lib/app/router.dart').readAsStringSync();
+    expect(router, isNot(contains('DashboardRoute.route(),')));
   });
 
   test('doctor command is available', () async {
@@ -349,6 +407,34 @@ void main() {
         }
       }
     }
+  });
+
+  test('verify command generates starter samples without analyze', () async {
+    final repoRoot = previousDirectory.parent.path;
+    final runner = CommandRunner<int>('test', 'test')
+      ..addCommand(
+        VerifyCommand(
+          logger: Logger(),
+          masonService: MasonService(
+            logger: Logger(),
+            workingDirectory: Directory(repoRoot),
+          ),
+          tempDirectoryFactory: () => tempDirectory,
+        ),
+      );
+
+    final exitCode = await runner.run(['verify', '--no-analyze']);
+
+    expect(exitCode, 0);
+    expect(
+      Directory(
+        p.join(
+          tempDirectory.path,
+          'riverpod_rest_firebase_hybrid_auth_offline',
+        ),
+      ).existsSync(),
+      isTrue,
+    );
   });
 
   test('normalizes firebase backend config values', () {

@@ -11,3 +11,8 @@ vars:
     type: string
     description: Target feature name.
     prompt: Which feature should contain this page?
+  route_path:
+    type: string
+    description: Route path for the generated page.
+    default: ""
+    prompt: What route path should be used?

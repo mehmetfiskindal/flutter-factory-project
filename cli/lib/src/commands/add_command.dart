@@ -201,11 +201,21 @@ class AddPageCommand extends Command<int> {
       mandatory: true,
       help: 'Target feature name.',
     );
-    argParser.addFlag(
-      'force',
-      negatable: false,
-      help: 'Overwrite generated files if they already exist.',
-    );
+    argParser
+      ..addOption(
+        'path',
+        help: 'Route path. Defaults to /<name-param-case>.',
+      )
+      ..addFlag(
+        'route',
+        defaultsTo: true,
+        help: 'Wire the page into the generated app router.',
+      )
+      ..addFlag(
+        'force',
+        negatable: false,
+        help: 'Overwrite generated files if they already exist.',
+      );
   }
 
   final Logger _logger;
@@ -216,7 +226,7 @@ class AddPageCommand extends Command<int> {
 
   @override
   String get invocation =>
-      'flutter_factory add page <name> --feature <feature_name> [--force]';
+      'flutter_factory add page <name> --feature <feature_name> [--path /custom-path] [--no-route] [--force]';
 
   @override
   String get name => 'page';
@@ -232,6 +242,10 @@ class AddPageCommand extends Command<int> {
 
     final featureName = argResults?['feature'] as String;
     validateDartIdentifier(featureName, label: 'feature');
+    final routePath = argResults?['path'] as String?;
+    if (routePath != null) {
+      validateRoutePath(routePath);
+    }
     final force = argResults?['force'] as bool? ?? false;
     ensureFileDoesNotExist(
       p.join(
@@ -253,19 +267,26 @@ class AddPageCommand extends Command<int> {
       vars: {
         'name': pageName,
         'feature': featureName,
+        if (routePath != null) 'route_path': routePath,
       },
     );
 
-    final routeIntegration = RouteIntegrator().addPageRoute(
-      pageName: pageName,
-      featureName: featureName,
-    );
-    if (routeIntegration.didUpdate) {
-      _logger.success(
-        'Wired page route in ${routeIntegration.updatedFiles.join(', ')}.',
+    final shouldWireRoute = argResults?['route'] as bool? ?? true;
+    if (shouldWireRoute) {
+      final routeIntegration = RouteIntegrator().addPageRoute(
+        pageName: pageName,
+        featureName: featureName,
+        routePath: routePath,
       );
-    } else if (routeIntegration.skippedReason != null) {
-      _logger.warn(routeIntegration.skippedReason!);
+      if (routeIntegration.didUpdate) {
+        _logger.success(
+          'Wired page route in ${routeIntegration.updatedFiles.join(', ')}.',
+        );
+      } else if (routeIntegration.skippedReason != null) {
+        _logger.warn(routeIntegration.skippedReason!);
+      }
+    } else {
+      _logger.info('Skipped route auto-wire.');
     }
 
     _logger.success('Page "$pageName" generated.');

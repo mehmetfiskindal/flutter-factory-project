@@ -9,11 +9,12 @@ Current commands:
 - `flutter_factory create <app_name>`: creates a new Flutter project from the starter brick.
 - `flutter_factory add feature <name>`: adds a feature-first Clean Architecture module.
 - `flutter_factory add api <name> --endpoint <endpoint>`: adds Dio service, Freezed model, repository, use cases, and Riverpod providers.
-- `flutter_factory add page <name> --feature <feature_name>`: adds a page inside a feature.
+- `flutter_factory add page <name> --feature <feature_name>`: adds a page inside a feature and wires it into the starter router when route markers are present.
 - `flutter_factory add usecase <name> --feature <feature_name>`: adds a domain use case.
 - `flutter_factory add widget <name> --feature <feature_name>`: adds a reusable widget.
 - `flutter_factory config`: runs interactive setup for state management, backend, auth, and offline defaults.
 - `flutter_factory doctor`: checks local tooling and brick availability.
+- `flutter_factory verify`: locally generates starter samples and optionally runs `flutter analyze`.
 
 ## Local Development Usage
 
@@ -34,8 +35,11 @@ cd my_app
 flutter_factory add feature profile --state riverpod
 flutter_factory add api billing --endpoint /v1/billing
 flutter_factory add page dashboard --feature profile
+flutter_factory add page activity_log --feature profile --path /profile/activity
+flutter_factory add page draft --feature profile --no-route
 flutter_factory add usecase sync_profile --feature profile
 flutter_factory add widget profile_tile --feature profile
+flutter_factory verify --no-analyze
 ```
 
 For one-off usage without global activation:

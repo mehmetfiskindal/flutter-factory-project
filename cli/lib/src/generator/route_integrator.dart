@@ -24,6 +24,7 @@ class RouteIntegrator {
   RouteIntegrationResult addPageRoute({
     required String pageName,
     required String featureName,
+    String? routePath,
   }) {
     final routePathsFile = File(
       p.join(
@@ -44,6 +45,7 @@ class RouteIntegrator {
     final routePathsUpdated = _updateRoutePaths(
       file: routePathsFile,
       pageName: pageName,
+      routePath: routePath,
     );
     final routerUpdated = _updateRouter(
       file: routerFile,
@@ -75,11 +77,12 @@ class RouteIntegrator {
   bool _updateRoutePaths({
     required File file,
     required String pageName,
+    String? routePath,
   }) {
     final content = file.readAsStringSync();
     final routeField = _camelCase(pageName);
-    final pathEntry =
-        "  static const $routeField = '/${_paramCase(pageName)}';";
+    final pathEntry = "  static const $routeField = "
+        "'${routePath ?? '/${_paramCase(pageName)}'}';";
     final nameEntry = "  static const $routeField = '$routeField';";
 
     var updated = content;

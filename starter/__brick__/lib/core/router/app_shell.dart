@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+{{#include_offline}}import '../offline/offline_banner.dart';
+{{/include_offline}}
 import 'route_paths.dart';
 
 class AppShell extends StatelessWidget {
@@ -16,7 +18,12 @@ class AppShell extends StatelessWidget {
     final location = GoRouterState.of(context).matchedLocation;
 
     return Scaffold(
-      body: child,
+      body: {{#include_offline}}Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: child),
+        ],
+      ){{/include_offline}}{{^include_offline}}child{{/include_offline}},
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex(location),
         onDestinationSelected: (index) {
