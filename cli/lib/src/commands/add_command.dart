@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../config/flutter_factory_config.dart';
 import '../generator/mason_service.dart';
+import '../generator/route_integrator.dart';
 import '../utils/name_validator.dart';
 
 class AddCommand extends Command<int> {
@@ -254,6 +255,18 @@ class AddPageCommand extends Command<int> {
         'feature': featureName,
       },
     );
+
+    final routeIntegration = RouteIntegrator().addPageRoute(
+      pageName: pageName,
+      featureName: featureName,
+    );
+    if (routeIntegration.didUpdate) {
+      _logger.success(
+        'Wired page route in ${routeIntegration.updatedFiles.join(', ')}.',
+      );
+    } else if (routeIntegration.skippedReason != null) {
+      _logger.warn(routeIntegration.skippedReason!);
+    }
 
     _logger.success('Page "$pageName" generated.');
     return ExitCode.success.code;

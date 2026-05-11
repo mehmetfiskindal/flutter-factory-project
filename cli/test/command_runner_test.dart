@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:flutter_factory/flutter_factory.dart';
 import 'package:flutter_factory/src/commands/config_command.dart';
+import 'package:flutter_factory/src/commands/add_command.dart';
 import 'package:flutter_factory/src/commands/create_command.dart';
 import 'package:flutter_factory/src/commands/doctor_command.dart';
 import 'package:flutter_factory/src/config/flutter_factory_config.dart';
@@ -65,6 +66,85 @@ void main() {
     ]);
 
     expect(exitCode, 64);
+  });
+
+  test('add page wires route constants and shell route markers', () async {
+    _createGeneratedRouterFiles();
+    final masonService = _RecordingMasonService();
+    final runner = CommandRunner<int>('test', 'test')
+      ..addCommand(
+        AddPageCommand(
+          logger: Logger(),
+          masonService: masonService,
+        ),
+      );
+
+    final exitCode = await runner.run([
+      'page',
+      'dashboard',
+      '--feature',
+      'profile',
+    ]);
+
+    expect(exitCode, 0);
+    expect(masonService.brickName, 'page');
+    expect(masonService.vars['name'], 'dashboard');
+    expect(masonService.vars['feature'], 'profile');
+
+    final routePaths = File(
+      'lib/core/router/route_paths.dart',
+    ).readAsStringSync();
+    final router = File('lib/app/router.dart').readAsStringSync();
+
+    expect(routePaths, contains("static const dashboard = '/dashboard';"));
+    expect(routePaths, contains("static const dashboard = 'dashboard';"));
+    expect(
+      router,
+      contains(
+        "import '../features/profile/presentation/routes/dashboard_route.dart';",
+      ),
+    );
+    expect(router, contains('DashboardRoute.route(),'));
+  });
+
+  test('add page route wiring is idempotent', () async {
+    _createGeneratedRouterFiles();
+    final masonService = _RecordingMasonService();
+    final runner = CommandRunner<int>('test', 'test')
+      ..addCommand(
+        AddPageCommand(
+          logger: Logger(),
+          masonService: masonService,
+        ),
+      );
+
+    for (var i = 0; i < 2; i += 1) {
+      final exitCode = await runner.run([
+        'page',
+        'dashboard',
+        '--feature',
+        'profile',
+        '--force',
+      ]);
+      expect(exitCode, 0);
+    }
+
+    final routePaths = File(
+      'lib/core/router/route_paths.dart',
+    ).readAsStringSync();
+    final router = File('lib/app/router.dart').readAsStringSync();
+
+    expect(
+        _countOccurrences(routePaths, "static const dashboard = '/dashboard';"),
+        1);
+    expect(
+      _countOccurrences(
+        router,
+        "import '../features/profile/presentation/routes/dashboard_route.dart';",
+      ),
+      1,
+    );
+    expect(_countOccurrences(router, 'DashboardRoute.route(),'), 1);
   });
 
   test('doctor command is available', () async {
@@ -382,6 +462,42 @@ void _createFlutterFactoryRoot() {
   }
 }
 
+void _createGeneratedRouterFiles() {
+  File('lib/core/router/route_paths.dart')
+    ..createSync(recursive: true)
+    ..writeAsStringSync('''
+abstract final class RoutePaths {
+  static const home = '/home';
+  static const settings = '/settings';
+  // flutter_factory: route-paths-start
+  // flutter_factory: route-paths-end
+}
+
+abstract final class RouteNames {
+  static const home = 'home';
+  static const settings = 'settings';
+  // flutter_factory: route-names-start
+  // flutter_factory: route-names-end
+}
+''');
+
+  File('lib/app/router.dart')
+    ..createSync(recursive: true)
+    ..writeAsStringSync('''
+import '../features/home/presentation/views/home_view.dart';
+import '../features/settings/presentation/views/settings_view.dart';
+// flutter_factory: route-imports-start
+// flutter_factory: route-imports-end
+
+final routes = [
+  HomeRoute.route(),
+  SettingsRoute.route(),
+  // flutter_factory: shell-routes-start
+  // flutter_factory: shell-routes-end
+];
+''');
+}
+
 class _RecordingMasonService extends MasonService {
   _RecordingMasonService() : super(logger: Logger());
 
@@ -410,4 +526,8 @@ List<File> _generatedFiles(Directory directory) {
       .whereType<File>()
       .where((file) => !p.basename(file.path).endsWith('.lock'))
       .toList();
+}
+
+int _countOccurrences(String content, String pattern) {
+  return pattern.allMatches(content).length;
 }

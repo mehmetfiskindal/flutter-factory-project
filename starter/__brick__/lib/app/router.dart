@@ -19,6 +19,8 @@ import '../features/auth/presentation/views/sign_in_view.dart';
 {{/include_auth}}
 import '../features/home/presentation/views/home_view.dart';
 import '../features/settings/presentation/views/settings_view.dart';
+// flutter_factory: route-imports-start
+// flutter_factory: route-imports-end
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -81,6 +83,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             name: RouteNames.settings,
             builder: (context, state) => const SettingsView(),
           ),
+          // flutter_factory: shell-routes-start
+          // flutter_factory: shell-routes-end
         ],
       ),
     ],
@@ -163,6 +167,8 @@ GoRouter createAppRouter({{#include_auth}}AuthBloc authBloc{{/include_auth}}) {
             name: RouteNames.settings,
             builder: (context, state) => const SettingsView(),
           ),
+          // flutter_factory: shell-routes-start
+          // flutter_factory: shell-routes-end
         ],
       ),
     ],
